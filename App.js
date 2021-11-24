@@ -3,18 +3,27 @@ import React, {useEffect} from 'react';
 import {
   Button,
   Image,
+  Switch,
   ImageBackground,
   StyleSheet,
   TouchableOpacity,
   TouchableHighlight,
   Text,
   View,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  FlatList,
+  Linking,
 } from 'react-native';
 import {WebView} from 'react-native-webview';
 import langData from '../bsapp/src/lang/config.json';
+import notiData from '../bsapp/src/lang/noti.json';
 import {NavigationContainer} from '@react-navigation/native';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import SplashScreen from 'react-native-splash-screen';
+
+const DATA = notiData.DATA;
 
 function HomeScreen({navigation}) {
   let state = {
@@ -72,7 +81,10 @@ function HomeScreen({navigation}) {
         <View style={styles.item3}>
           <TouchableOpacity
             onPress={() =>
-              navigation.navigate('Push', {name: message.word.main_title1})
+              navigation.navigate('Push', {
+                name: message.word.main_title1,
+                data: message.word,
+              })
             }
             style={styles.button1}>
             <ImageBackground
@@ -121,7 +133,7 @@ function HomeScreen({navigation}) {
             onPress={() =>
               navigation.navigate('Inquireis', {
                 name: message.word.main_title5,
-                data: message.word.main_title5,
+                data: message.word,
               })
             }
             style={styles.button2}>
@@ -155,14 +167,79 @@ function DetailsScreen({navigation}) {
   );
 }
 
-function PushScreen({navigation}) {
+function PushScreen({route, navigation}) {
+  const renderItem = ({item}) => <Item title={item.title} text={item.text} />;
+
+  //언어데이터
+  const {data} = route.params;
+  //토글스위치
+  const [isEnabled, setIsEnabled] = React.useState(false);
+  const toggleSwitch = () => setIsEnabled(previousState => !previousState);
+
+  //flatlist
+  const Item = ({title, text}) => {
+    const [shouldShow, setShouldShow] = React.useState(false);
+
+    const toggle = {
+      style: stylesPush.notiBox_1,
+    };
+
+    const [slide, setSlide] = React.useState(toggle);
+
+    const toggleShow = () => {
+      if (shouldShow) {
+        setShouldShow(!shouldShow),
+          setSlide({
+            style: stylesPush.notiBox_1,
+            carrot: '^',
+          });
+      } else {
+        setShouldShow(!shouldShow),
+          setSlide({
+            style: stylesPush.notiBox_2,
+          });
+      }
+    };
+
+    return (
+      <View style={slide.style}>
+        <Text style={stylesPush.title} onPress={() => toggleShow()}>
+          {title}
+        </Text>
+        {shouldShow ? (
+          <ScrollView style={stylesPush.scrollView}>
+            <Text style={stylesPush.text}>{text}</Text>
+          </ScrollView>
+        ) : null}
+      </View>
+    );
+  };
+
   return (
     <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <Text>Seonoh Detail Screen</Text>
-      <Button
-        title="Go Home screen"
-        onPress={() => navigation.navigate('Home')}
-      />
+      <View style={stylesPush.item1}>
+        <Text style={stylesPush.item1_t1}>{data.sub_page1_t1}</Text>
+        <Switch
+          style={stylesPush.item1_swtich}
+          trackColor={{false: '#767577', true: '#81b0ff'}}
+          thumbColor={isEnabled ? '#f5dd4b' : '#f4f3f4'}
+          ios_backgroundColor="#3e3e3e"
+          onValueChange={toggleSwitch}
+          value={isEnabled}
+        />
+      </View>
+      <View style={stylesPush.item2}>
+        <Text style={stylesPush.item2_t1}>{data.sub_page1_t2}</Text>
+      </View>
+      <View style={stylesPush.item3}>
+        <SafeAreaView style={stylesPush.container}>
+          <FlatList
+            data={DATA}
+            renderItem={renderItem}
+            keyExtractor={item => item.id}
+          />
+        </SafeAreaView>
+      </View>
     </View>
   );
 }
@@ -196,14 +273,80 @@ function MenuScreen() {
 }
 
 function InquireisScreen({route, navigation}) {
-  const {data} = route.params;
+  const {name, data} = route.params;
   return (
-    <View style={{flex: 1, alignItems: 'center', justifyContent: 'center'}}>
-      <Text>{JSON.stringify(data)}</Text>
-      <Button
-        title="Go Home screen"
-        onPress={() => navigation.navigate('Home')}
-      />
+    <View style={{flex: 1, alignItems: 'center', justifyContent: 'flex-start'}}>
+      {/* 어플리케이션 안내 및 알림 수신 방법 */}
+      <View style={[{width: '90%', height: '12%'}]}>
+        <Text style={stylesInquries.title1}>{data.sub_page5_t1}</Text>
+      </View>
+      {/* 본어플.. */}
+      <View style={[{width: '90%', height: '12%'}]}>
+        <Text style={stylesInquries.title1_t1}>{data.sub_page5_t1_t1}</Text>
+      </View>
+      {/* push 알림을... */}
+      <View style={[{width: '90%', height: '12%'}]}>
+        <Text style={stylesInquries.title1_t2}>{data.sub_page5_t1_t2}</Text>
+      </View>
+      {/* 이용방법문의 */}
+      <View style={[{width: '90%', height: '8%'}]}>
+        <Text style={stylesInquries.title2}>{data.sub_page4_t1}</Text>
+      </View>
+
+      {/* 원생게시판바로가기 */}
+      <View
+        style={[
+          {
+            flex: 1,
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            width: '100%',
+            height: '60%',
+          },
+        ]}>
+        <View style={[{width: '90%'}]}>
+          <Button
+            style={stylesInquries.title2_b1}
+            title={data.sub_page4_b1}
+            onPress={() => {
+              Linking.openURL('https://dorm.pusan.ac.kr/');
+            }}
+          />
+        </View>
+        <View style={[{width: '90%'}]}>
+          <Text style={stylesInquries.title2_t1}>{data.sub_page4_b1_t}</Text>
+        </View>
+
+        {/* 현제 거주중 */}
+        <View style={[{width: '90%', marginTop: '5%'}]}>
+          <Button
+            style={stylesInquries.title2_b2}
+            title={data.sub_page4_b2}
+            onPress={() => {
+              Linking.openURL('https://dorm.pusan.ac.kr/');
+            }}
+          />
+        </View>
+        {/* 현재 거주중X */}
+        <View style={[{width: '90%'}]}>
+          <Text style={stylesInquries.title2_t2}>{data.sub_page4_b2_t}</Text>
+        </View>
+
+        {/* 생활원 전화문의 */}
+        <View style={[{width: '90%', marginTop: '5%'}]}>
+          <Button
+            style={stylesInquries.title2_b3}
+            title={data.sub_page4_b3}
+            onPress={() => {
+              Linking.openURL(`tel:051-510-7827`);
+            }}
+          />
+        </View>
+        {/* 행정실 운영시간 */}
+        <View style={[{width: '90%'}]}>
+          <Text style={stylesInquries.title2_t3}>{data.sub_page4_b3_t}</Text>
+        </View>
+      </View>
     </View>
   );
 }
@@ -409,6 +552,170 @@ const styles = StyleSheet.create({
     // borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+});
+
+const stylesPush = StyleSheet.create({
+  item1: {
+    width: '98%',
+    height: '8%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  item1_swtich: {
+    padding: 5,
+    transform: [{scaleX: 1.3}, {scaleY: 1.3}],
+  },
+  item1_t1: {
+    fontSize: 20,
+    padding: 5,
+    color: '#000000',
+    fontWeight: '600',
+  },
+  item2: {
+    width: '98%',
+    height: '8%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  item2_t1: {
+    top: 15,
+    fontSize: 20,
+    padding: 5,
+    color: '#000000',
+    fontWeight: '600',
+  },
+  item3: {
+    width: '100%',
+    height: '84%',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    // borderWidth: 1,
+  },
+  container: {
+    flex: 1,
+    paddingTop: StatusBar.currentHeight,
+  },
+  scrollView: {
+    marginHorizontal: 0,
+  },
+
+  notiBox_1: {
+    padding: 5,
+    marginVertical: 10,
+    marginHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D3D3D3',
+    height: 50,
+  },
+  notiBox_2: {
+    padding: 5,
+    marginVertical: 10,
+    marginHorizontal: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#D3D3D3',
+    height: 300,
+  },
+  title: {
+    fontSize: 22,
+    color: '#000000',
+    fontWeight: '500',
+  },
+  text: {
+    marginTop: 10,
+    fontSize: 15,
+    color: '#000000',
+    fontWeight: '500',
+    backgroundColor: '#ffffff',
+  },
+});
+
+const stylesInquries = StyleSheet.create({
+  title1: {
+    marginTop: '5%',
+    width: '95%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+    fontSize: 20,
+    color: '#000000',
+    fontWeight: '600',
+  },
+  title1_t1: {
+    marginLeft: '5%',
+    width: '90%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  title1_t2: {
+    marginLeft: '5%',
+    width: '90%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  title2: {
+    fontSize: 20,
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+    color: '#000000',
+    fontWeight: '600',
+  },
+  title2_b1: {
+    width: '90%',
+    height: '8%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  title2_t1: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  title2_b2: {
+    width: '100%',
+    height: '8%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  title2_t2: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  title2_b3: {
+    width: '100%',
+    height: '8%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
+  },
+  title2_t3: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    // borderWidth: 1,
   },
 });
 
